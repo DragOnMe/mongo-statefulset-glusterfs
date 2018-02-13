@@ -6,7 +6,7 @@
 * 참고: http://blog.kubernetes.io/2017/01/running-mongodb-on-kubernetes-with-statefulsets.html
 
 
-## 1 How To Run
+## 1. How To Run
 
 ### 1.1 Prerequisites
 
@@ -44,10 +44,12 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
 1. 컨테이너로 기동된 모든 Replica Set의 멤버 mongod 서버들간의 데이터 동기화.
 2. MongoDB Service/StatefulSet이 삭제되어도 데이터가 유지되며(persistent volume), 동일한 Persistent Volume Claim을 사용하므로 삭제 후 재생성(03-delete_service.sh ... 04-recreate_service.sh)을 할 경우 이전의 데이터 및 Replica Set 은 그대로 유지.
 
+
 #### 1.3.1 Replication Test
 
 다음의 절차대로 데이터 복제 테스트:
 
+    ```
     $ kubectl exec -it mongod-ss-0 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
@@ -55,36 +57,44 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
     > db.testcoll.insert({a:1});
     > db.testcoll.insert({b:2});
     > db.testcoll.find();
-    
+    ```
+    
 첫 번 째 컨테이너(“mongod-ss-0”)에서 빠져나온 후. 두 번 째 컨테이너(“mongod-ss-1”)로 접속, 앞서 insert 한 데이터가 조회되는지 확인:
 
+    ```
     $ kubectl exec -it mongod-ss-1 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.setSlaveOk(1);
     > db.testcoll.find();
-    
+    ```
+
 
 #### 1.3.2 Redeployment Without Data Loss Test
 
 Service 와 StatefulSet/Pods 를 삭제하고 동일한 구성(mongodb-service.yaml)으로 MongoDB Replica Set을 다시 생성:
 
+    ```
     $ ./03-delete_service.sh
     $ ./04-recreate_service.sh
+    ```
     
 3개의 StatefulSet Pod가 기동된 후, mongod 컨테이너로 접속하여 데이터 보존 확인:
 
+    ```
     $ kubectl exec -it mongod-0 -c -n $MONGOD_NAMESPACE mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.testcoll.find();
-    
+    ```
+
 
 ### 1.4 Undeploying & Cleaning Down the Kubernetes Environment
 
 다음의 스크립트를 실행하면 MongoDB Replica Set을 구성하는 모든 요소들(namespace 포함)이 삭제 됨 
 
+    ```
     $ ./teardown.sh
-    
+    ```
