@@ -10,7 +10,7 @@
 
 ### 1.1 Prerequisites
 
-Fully running Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or external via HEKETI)
+Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or external via HEKETI)
 
 ### 1.2 Main Deployment Steps 
 
@@ -19,17 +19,17 @@ Fully running Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or ext
 * 각 스트립트 내에 mongod-ss, ns-mongo 로 기본 값이 지정되어 있음.
 * 서비스명(Headless Service)은 mongodb-hs로 YAML 내에 지정되어 있음.
 
-
+    ```
     $ ./01-generate_mongo_ss.sh
-
+    ```
 
 3개의 mongod pod가 순차적으로 만들어지며(0>1>2), 마지막 2번이 만들어지면 결과를 보여줌
 
 2. 다음 스크립트를 실행하면, Mongo Shell 을 통해서 (1) MongoDB Replica Set 이 설정되며 (2) MongoDB main_admin 계정이 생성(실행 인자로 암호 문자열 입력)
 
-
+    ```
     $ ./02-configure_repset_auth.sh abc123
-
+    ```
 
 Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다음의 주소들로 접속 가능:
 
