@@ -19,23 +19,25 @@ Fully running Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or ext
 * 각 스트립트 내에 mongod-ss, ns-mongo 로 기본 값이 지정되어 있음.
 * 서비스명(Headless Service)은 mongodb-hs로 YAML 내에 지정되어 있음.
 
-    ```
+
     $ ./01-generate_mongo_ss.sh
-    ```
+
 
 3개의 mongod pod가 순차적으로 만들어지며(0>1>2), 마지막 2번이 만들어지면 결과를 보여줌
 
 2. 다음 스크립트를 실행하면, Mongo Shell 을 통해서 (1) MongoDB Replica Set 이 설정되며 (2) MongoDB main_admin 계정이 생성(실행 인자로 암호 문자열 입력)
 
-    ```
+
     $ ./02-configure_repset_auth.sh abc123
-    ```
+
 
 Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다음의 주소들로 접속 가능:
+
 
     mongod-ss-0.mongodb-hs.ns-mongo.svc.cluster.local:27017
     mongod-ss-1.mongodb-hs.ns-mongo.svc.cluster.local:27017
     mongod-ss-2.mongodb-hs.ns-mongo.svc.cluster.local:27017
+
 
 ### 1.3 Example Tests To Run To Check Things Are Working
 
@@ -49,7 +51,7 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
 
 다음의 절차대로 데이터 복제 테스트:
 
-    ```
+
     $ kubectl exec -it mongod-ss-0 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
@@ -57,44 +59,44 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
     > db.testcoll.insert({a:1});
     > db.testcoll.insert({b:2});
     > db.testcoll.find();
-    ```
+
     
 첫 번 째 컨테이너(“mongod-ss-0”)에서 빠져나온 후. 두 번 째 컨테이너(“mongod-ss-1”)로 접속, 앞서 insert 한 데이터가 조회되는지 확인:
 
-    ```
+
     $ kubectl exec -it mongod-ss-1 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.setSlaveOk(1);
     > db.testcoll.find();
-    ```
+
 
 
 #### 1.3.2 Redeployment Without Data Loss Test
 
 Service 와 StatefulSet/Pods 를 삭제하고 동일한 구성(mongodb-service.yaml)으로 MongoDB Replica Set을 다시 생성:
 
-    ```
+
     $ ./03-delete_service.sh
     $ ./04-recreate_service.sh
-    ```
+
     
 3개의 StatefulSet Pod가 기동된 후, mongod 컨테이너로 접속하여 데이터 보존 확인:
 
-    ```
+
     $ kubectl exec -it mongod-0 -c -n $MONGOD_NAMESPACE mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.testcoll.find();
-    ```
+
 
 
 ### 1.4 Undeploying & Cleaning Down the Kubernetes Environment
 
 다음의 스크립트를 실행하면 MongoDB Replica Set을 구성하는 모든 요소들(namespace 포함)이 삭제 됨 
 
-    ```
+
     $ ./teardown.sh
-    ```
+
