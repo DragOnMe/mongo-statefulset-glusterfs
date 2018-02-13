@@ -3,8 +3,12 @@
 * 별도 설정 변경이나 수작업 없이 스크립트로 MongoDB Replica Set 을 생성하고 정리할 수 있음
 * MongoDB Replica Set을 Kubernetes Cluster 내에 StatefulSet 으로 구현함
 * Bash script 내에서 kubectl 명령으로 Mongo Shell을 통해 Replica Set 설정을 수행하고 mongo admin 계정을 생성
-* 참고: http://blog.kubernetes.io/2017/01/running-mongodb-on-kubernetes-with-statefulsets.html
+* Replica Set 구성을 위한 별도의 sidecar 컨테이너를 쓰지 않음
 
+```
+참고1: http://blog.kubernetes.io/2017/01/running-mongodb-on-kubernetes-with-statefulsets.html
+참고2: https://github.com/pkdone/gke-mongodb-demo
+```
 
 ## 1. How To Run
 
