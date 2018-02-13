@@ -1,9 +1,9 @@
 # MongoDB Deployment Demo for Kubernetes with dynamic glusterfs pv
 
+* 별도 설정 변경이나 수작업 없이 스크립트로 MongoDB Replica Set 을 생성하고 정리할 수 있음
 * MongoDB Replica Set을 Kubernetes Cluster 내에 StatefulSet 으로 구현함
-* Bash script 내에서 kubectl 명령으로 Replica Set 설정을 수행하고 mongo admin 계정을 생성
-
-For further background information on what these scripts and resource files do, plus general information about running MongoDB with Kubernetes, see: [http://k8smongodb.net/](http://k8smongodb.net/)
+* Bash script 내에서 kubectl 명령으로 Mongo Shell을 통해 Replica Set 설정을 수행하고 mongo admin 계정을 생성
+* 참고: http://blog.kubernetes.io/2017/01/running-mongodb-on-kubernetes-with-statefulsets.html
 
 
 ## 1 How To Run
@@ -14,100 +14,74 @@ Fully running Kubernetes 1.7~1.9x Cluster with HCI-like glusterfs storage soluti
 
 ### 1.2 Main Deployment Steps 
 
-1. To create a Kubernetes cluster, create the required disk storage (and associated PersistentVolumes), and deploy the MongoDB Service (including the StatefulSet running "mongod" containers), via a command-line terminal/shell (ensure the script files are set to be executable):
+1. 모든 sh 파일들은 a+x 로 실행 가능하도록 하고, MONGOD_STATEFULSET, MONGOD_NAMESPACE 변수를 원하는 값으로 설정
 
     ```
-    $ ./generate.sh
+    $ ./01-generate_mongo_ss.sh
     ```
 
-2. Execute the following script which connects to the first Mongod instance running in a container of the Kubernetes StatefulSet, via the Mongo Shell, to (1) initialise the MongoDB Replica Set, and (2) create a MongoDB admin user (specify the password you want as the argument to the script, replacing 'abc123').
+3개의 mongod pod가 순차적으로 만들어지며(0>1>2), 마지막 2번이 만들어지면 결과를 보여줌
+
+2. 다음 스크립트를 실행하면, Mongo Shell 을 통해서 (1) MongoDB Replica Set 이 설정되며 (2) MongoDB main_admin 계정이 생성(실행 인자로 암호 문자열 입력)
 
     ```
-    $ ./configure_repset_auth.sh abc123
+    $ ./02-configure_repset_auth.sh abc123
     ```
 
-You should now have a MongoDB Replica Set initialised, secured and running in a Kubernetes Stateful Set. You can view the list of Pods that contain these MongoDB resources, by running the following:
+Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다음의 주소들로 접속 가능:
 
-    $ kubectl get pods
-
-You can also view the the state of the deployed environment via the [Google Cloud Platform Console](https://console.cloud.google.com) (look at both the “Kubernetes Engine” and the “Compute Engine” sections of the Console).
-
-The running replica set members will be accessible to any "app tier" containers, that are running in the same Kubernetes cluster, via the following hostnames and ports (remember to also specify the username and password, when connecting to the database):
-
-    mongod-0.mongodb-service.default.svc.cluster.local:27017
-    mongod-1.mongodb-service.default.svc.cluster.local:27017
-    mongod-2.mongodb-service.default.svc.cluster.local:27017
+    mongod-ss-0.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
+    mongod-ss-1.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
+    mongod-ss-2.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
 
 ### 1.3 Example Tests To Run To Check Things Are Working
 
-Use this section to prove:
+다음 사항들을 점검:
 
-1. Data is being replicated between members of the containerised replica set.
-2. Data is retained even when the MongoDB Service/StatefulSet is removed and then re-created (by virtue of re-using the same Persistent Volume Claims).
+1. 컨테이너로 기동된 모든 Replica Set의 멤버 mongod 서버들간의 데이터 동기화.
+2. MongoDB Service/StatefulSet이 삭제되어도 데이터가 유지되며(persistent volume), 동일한 Persistent Volume Claim을 사용하므로 삭제 후 재생성(03-delete_service.sh ... 04-recreate_service.sh)을 할 경우 이전의 데이터 및 Replica Set 은 그대로 유지.
 
 #### 1.3.1 Replication Test
 
-Connect to the container running the first "mongod" replica, then use the Mongo Shell to authenticate and add some test data to a database:
+다음의 절차대로 데이터 복제 테스트:
 
-    $ kubectl exec -it mongod-0 -c mongod-container bash
+    $ kubectl exec -it mongod-ss-0 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.testcoll.insert({a:1});
     > db.testcoll.insert({b:2});
     > db.testcoll.find();
-    
-Exit out of the shell and exit out of the first container (“mongod-0”). Then connect to the second container (“mongod-1”), run the Mongo Shell again and see if the previously inserted data is visible to the second "mongod" replica:
+    
+첫 번 째 컨테이너(“mongod-ss-0”)에서 빠져나온 후. 두 번 째 컨테이너(“mongod-ss-1”)로 접속, 앞서 insert 한 데이터가 조회되는지 확인:
 
-    $ kubectl exec -it mongod-1 -c mongod-container bash
+    $ kubectl exec -it mongod-ss-1 -n $MONGOD_NAMESPACE -c mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.setSlaveOk(1);
     > db.testcoll.find();
     
-You should see that the two records inserted via the first replica, are visible to the second replica.
 
 #### 1.3.2 Redeployment Without Data Loss Test
 
-To see if Persistent Volume Claims really are working, run a script to drop the Service & StatefulSet (thus stopping the pods and their “mongod” containers) and then a script to re-create them again:
+Service 와 StatefulSet/Pods 를 삭제하고 동일한 구성(mongodb-service.yaml)으로 MongoDB Replica Set을 다시 생성:
 
-    $ ./delete_service.sh
-    $ ./recreate_service.sh
-    $ kubectl get all
+    $ ./03-delete_service.sh
+    $ ./04-recreate_service.sh
     
-Keep re-running the final command above, until you can see that all 3 “mongod” pods and their containers have been successfully started again. Then connect to the first container, run the Mongo Shell and query to see if the data we’d inserted into the old containerised replica-set is still present in the re-instantiated replica set:
+3개의 StatefulSet Pod가 기동된 후, mongod 컨테이너로 접속하여 데이터 보존 확인:
 
-    $ kubectl exec -it mongod-0 -c mongod-container bash
+    $ kubectl exec -it mongod-0 -c -n $MONGOD_NAMESPACE mongod-container -- bash
     $ mongo
     > db.getSiblingDB('admin').auth("main_admin", "abc123");
     > use test;
     > db.testcoll.find();
     
-You should see that the two records inserted earlier, are still present.
 
 ### 1.4 Undeploying & Cleaning Down the Kubernetes Environment
 
-**Important:** This step is required to ensure you aren't continuously charged by Google Cloud for an environment you no longer need.
+다음의 스크립트를 실행하면 MongoDB Replica Set을 구성하는 모든 요소들(namespace 포함)이 삭제 됨 
 
-Run the following script to undeploy the MongoDB Service & StatefulSet plus related Kubernetes resources, followed by the removal of the GCE disks before finally deleting the GKE Kubernetes cluster.
-
-    $ ./teardown.sh
+    $ ./teardown.sh
     
-It is also worth checking in the [Google Cloud Platform Console](https://console.cloud.google.com), to ensure all resources have been removed correctly.
-
-
-## 2 Factors Addressed By This Project
-
-* Deployment of a MongoDB on the Google Kubernetes Engine
-* Use of Kubernetes StatefulSets and PersistentVolumeClaims to ensure data is not lost when containers are recycled
-* Proper configuration of a MongoDB Replica Set for full resiliency
-* Securing MongoDB by default for new deployments
-* Leveraging XFS filesystem for data file storage to improve performance
-* Disabling Transparent Huge Pages to improve performance
-* Disabling NUMA to improve performance
-* Controlling CPU & RAM Resource Allocation
-* Correctly configuring WiredTiger Cache Size in containers
-* Controlling Anti-Affinity for Mongod Replicas to avoid a Single Point of Failure
-
-
