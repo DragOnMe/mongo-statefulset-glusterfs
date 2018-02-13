@@ -1,6 +1,7 @@
 # MongoDB Deployment Demo for Kubernetes with dynamic glusterfs pv
 
-An example project demonstrating the deployment of a MongoDB Replica Set via Kubernetes on the Google Kubernetes Engine (GKE). Contains example Kubernetes YAML resource files (in the 'resource' folder) and associated Kubernetes based Bash scripts (in the 'scripts' folder) to configure the environment and deploy a MongoDB Replica Set.
+  MongoDB Replica Set을 Kubernetes Cluster 내에 StatefulSet 으로 구현함
+  Bash script 내에서 kubectl 명령으로 Replica Set 설정을 수행하고 mongo admin 계정을 생성
 
 For further background information on what these scripts and resource files do, plus general information about running MongoDB with Kubernetes, see: [http://k8smongodb.net/](http://k8smongodb.net/)
 
