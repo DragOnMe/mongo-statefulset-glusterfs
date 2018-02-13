@@ -10,11 +10,14 @@
 
 ### 1.1 Prerequisites
 
-Fully running Kubernetes 1.7~1.9x Cluster with HCI-like glusterfs storage solution
+Fully running Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or external via HEKETI)
 
 ### 1.2 Main Deployment Steps 
 
-1. 모든 sh 파일들은 a+x 로 실행 가능하도록 하고, MONGOD_STATEFULSET, MONGOD_NAMESPACE 변수를 원하는 값으로 설정
+1. 모든 sh 파일들은 a+x 로 실행 가능하도록 하고, MONGOD_STATEFULSET, MONGOD_NAMESPACE 변수를 원하는 값으로 설정.
+
+* 각 스트립트 내에 mongod-ss, ns-mongo 로 기본 값이 지정되어 있음.
+* 서비스명(Headless Service)은 mongodb-hs로 YAML 내에 지정되어 있음.
 
     ```
     $ ./01-generate_mongo_ss.sh
@@ -30,9 +33,9 @@ Fully running Kubernetes 1.7~1.9x Cluster with HCI-like glusterfs storage soluti
 
 Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다음의 주소들로 접속 가능:
 
-    mongod-ss-0.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
-    mongod-ss-1.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
-    mongod-ss-2.mongodb-hs.$MONGOD_NAMESPACE.svc.cluster.local:27017
+    mongod-ss-0.mongodb-hs.ns-mongo.svc.cluster.local:27017
+    mongod-ss-1.mongodb-hs.ns-mongo.svc.cluster.local:27017
+    mongod-ss-2.mongodb-hs.ns-mongo.svc.cluster.local:27017
 
 ### 1.3 Example Tests To Run To Check Things Are Working
 
