@@ -59,7 +59,7 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
 다음의 절차대로 데이터 복제 테스트:
 
 ```
-    $ export MONGO_CLIENT=`kubectl get pods | grep mongo-client | awk '{print $1}'`
+    $ export MONGO_CLIENT=`kubectl get pods -n $MONGOD_NAMESPACE | grep mongo-client | awk '{print $1}'`
     $ kubectl exec -it -n $MONGOD_NAMESPACE $MONGO_CLIENT -- mongo mongodb://mongod-ss-0.mongodb-hs.ns-mongo.svc.cluster.local:27017
     MainRepSet:PRIMARY> db.getSiblingDB('admin').auth("main_admin", "abc123");
     MainRepSet:PRIMARY> use test;
