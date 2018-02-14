@@ -56,25 +56,25 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
 다음의 절차대로 데이터 복제 테스트:
 
 ```
-    $ kubectl exec -it mongod-ss-0 -n $MONGOD_NAMESPACE -c mongod-container -- bash
-    $ mongo
-    > db.getSiblingDB('admin').auth("main_admin", "abc123");
-    > use test;
-    > db.testcoll.insert({a:1});
-    > db.testcoll.insert({b:2});
-    > db.testcoll.find();
+    $ kubectl run mongo-client -n $MONGOD_NAMESPACE --image=mongoclient/mongoclient
+    $ export MONGO_CLIENT=`kubectl get pods | grep mongo-client | awk '{print $1}'`
+    $ kubectl exec -it -n $MONGOD_NAMESPACE $MONGO_CLIENT -- mongo mongodb://mongod-ss-0.mongodb-hs.ns-mongo.svc.cluster.local:27017
+    MainRepSet:PRIMARY> db.getSiblingDB('admin').auth("main_admin", "abc123");
+    MainRepSet:PRIMARY> use test;
+    MainRepSet:PRIMARY> db.testcoll.insert({a:1});
+    MainRepSet:PRIMARY> db.testcoll.insert({b:2});
+    MainRepSet:PRIMARY> db.testcoll.find();
 ```
 
 
 첫 번 째 컨테이너(“mongod-ss-0”)에서 빠져나온 후. 두 번 째 컨테이너(“mongod-ss-1”)로 접속, 앞서 insert 한 데이터가 조회되는지 확인:
 
 ```
-    $ kubectl exec -it mongod-ss-1 -n $MONGOD_NAMESPACE -c mongod-container -- bash
-    $ mongo
-    > db.getSiblingDB('admin').auth("main_admin", "abc123");
-    > use test;
-    > db.setSlaveOk(1);
-    > db.testcoll.find();
+    $ kubectl exec -it -n $MONGOD_NAMESPACE $MONGO_CLIENT -- mongo mongodb://mongod-ss-1.mongodb-hs.ns-mongo.svc.cluster.local:27017
+    MainRepSet:SECONDARY> db.getSiblingDB('admin').auth("main_admin", "abc123");
+    MainRepSet:SECONDARY> use test;
+    MainRepSet:SECONDARY> db.setSlaveOk(1);
+    MainRepSet:SECONDARY> db.testcoll.find();
 ```
 
 
@@ -88,14 +88,14 @@ Service 와 StatefulSet/Pods 를 삭제하고 동일한 구성(mongodb-service.y
 ```
 
 
-3개의 StatefulSet Pod가 기동된 후, mongod 컨테이너로 접속하여 데이터 보존 확인:
+3개의 StatefulSet Pod가 기동된 후, mongod 컨테이너("mongod-ss-1")로 접속하여 데이터 보존 확인:
 
 ```
-    $ kubectl exec -it mongod-0 -c -n $MONGOD_NAMESPACE mongod-container -- bash
-    $ mongo
-    > db.getSiblingDB('admin').auth("main_admin", "abc123");
-    > use test;
-    > db.testcoll.find();
+    $ kubectl exec -it -n $MONGOD_NAMESPACE $MONGO_CLIENT -- mongo mongodb://mongod-ss-1.mongodb-hs.ns-mongo.svc.cluster.local:27017
+    MainRepSet:SECONDARY> db.getSiblingDB('admin').auth("main_admin", "abc123");
+    MainRepSet:SECONDARY> use test;
+    MainRepSet:SECONDARY> db.setSlaveOk(1);
+    MainRepSet:SECONDARY> db.testcoll.find();
 ```
 
 
