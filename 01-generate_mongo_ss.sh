@@ -29,6 +29,9 @@ done
 echo "...mongod containers are now running (`date`)"
 echo
 
+# Deploy Mongo Client for test
+kubectl run mongo-client -n $MONGOD_NAMESPACE --image=mongoclient/mongoclient
+
 # Print current deployment state
 kubectl get pv
 echo
