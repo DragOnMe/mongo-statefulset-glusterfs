@@ -77,6 +77,8 @@ Kubernetes Cluster 내의 모든 app tier 에서 각각의 MongoDB 서버로 다
     MainRepSet:SECONDARY> db.testcoll.find();
 ```
 
+세 번 째 컨테이너("mongod-ss-2") 에서도 동일한 방식으로 조회, 확인
+
 
 #### 1.3.2 Redeployment Without Data Loss Test
 
