@@ -20,14 +20,17 @@ Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or external via HEKE
 
 1. 모든 sh 파일들은 a+x 로 실행 가능하도록 하고, MONGOD_STATEFULSET, MONGOD_NAMESPACE 변수를 원하는 값으로 설정.
 
-* 각 스트립트 내에 mongod-ss, ns-mongo 로 기본 값이 지정되어 있음.
+* 각 스트립트 내에 Stateful Set 이름은 mongod-ss, 네임스페이스 이름은 ns-mongo 로 기본 값이 지정되어 있음.
 * 서비스명(Headless Service)은 mongodb-hs로 YAML 내에 지정되어 있음.
 
 ```
     $ ./01-generate_mongo_ss.sh
 ```
 
-3개의 mongod pod가 순차적으로 만들어지며(0>1>2), 마지막 2번이 만들어지면 결과를 보여줌
+3개의 mongod pod가 순차적으로 만들어지며(0>1>2), 마지막 pod까지 만들어지면 결과를 보여줌
+
+각 mongod pod가 생성되는 동안 "Error from server (NotFound)", "error unable to upgrade connection" 등의 오류가 발생하지만 종료될 떄까지 무시
+
 
 2. 다음 스크립트를 실행하면, Mongo Shell 을 통해서 (1) MongoDB Replica Set 이 설정되며 (2) MongoDB main_admin 계정이 생성(실행 인자로 암호 문자열 입력)
 
