@@ -1,6 +1,6 @@
 #!/bin/sh
 ##
-# Script to just deploy the MongoDB Service & StatefulSet back onto the exising Kubernetes cluster.
+# Script to just deploy the MongoDB Service & StatefulSet back onto the exising K8s cluster.
 ##
 
 # Variables

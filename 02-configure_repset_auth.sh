@@ -5,7 +5,7 @@
 # Set and create a MongoDB admin user.
 #
 # IMPORTANT: Only run this once all 3 StatefulSet mongod pods are shown with
-# status running (to see pod status run: $ kubectl get all)
+# status running (to see pod status run: $ kubectl get all -n $MONGOD_NAMESPACE)
 ##
 
 # Variables
@@ -15,7 +15,7 @@ MONGOD_NAMESPACE="ns-mongo"
 # Check for password argument
 if [[ $# -eq 0 ]] ; then
     echo 'You must provide one argument for the password of the "main_admin" user to be created'
-    echo '  Usage:  configure_repset_auth.sh MyPa55wd123'
+    echo '  Usage:  configure_repset_auth.sh PaSs123'
     echo
     exit 1
 fi
