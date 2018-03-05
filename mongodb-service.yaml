@@ -1,18 +1,39 @@
----
+# Service/endpoint for load balancing the client connection from outside
+# By NodePort
 apiVersion: v1
 kind: Service
 metadata:
+  name: mongodb-svc
+  labels:
+    role: mongo
+spec:
+  type: NodePort
+  ports:
+    - port: 27017
+      name: client
+      nodePort: 30017
+  selector:
+    name: mongors
+---
+# A headless service to create DNS records
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
   namespace: ns-mongo
   name: mongodb-hs
   labels:
-    name: mongo
+    role: mongo
 spec:
+  # the list of ports that are exposed by this service
   ports:
-  - port: 27017
-    targetPort: 27017
+    - port: 27017
+      name: mongodb
+      targetPort: 27017
   clusterIP: None
   selector:
-    role: mongo
+    name: mongors
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
