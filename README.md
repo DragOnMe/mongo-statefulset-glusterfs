@@ -4,6 +4,16 @@
 * MongoDB Replica Set을 Kubernetes Cluster 내에 StatefulSet 으로 구현함
 * Bash script 내에서 kubectl 명령으로 Mongo Shell을 통해 Replica Set 설정을 수행하고 mongo admin 계정을 생성
 * Replica Set 구성을 위한 별도의 sidecar 컨테이너를 쓰지 않음
+* mongo image 버전: 아래 버전들에서 정상 작동 확인 완료
+```
+    mongo:3.4
+    mongo:3.4.13
+    mongo:3.6
+    mongo:3.7
+
+    * mongo:3.2 에서는 아래 컨테이너 실행 오류 발생함
+    * "Error parsing option "wiredTigerCacheSizeGB" as int: Bad digit "." while parsing 0.25"
+```
 
 ```
 참고1: http://blog.kubernetes.io/2017/01/running-mongodb-on-kubernetes-with-statefulsets.html

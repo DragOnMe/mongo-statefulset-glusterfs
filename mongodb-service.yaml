@@ -3,6 +3,7 @@
 apiVersion: v1
 kind: Service
 metadata:
+  namespace: ns-mongo
   name: mongodb-svc
   labels:
     role: mongo
@@ -13,7 +14,7 @@ spec:
       name: client
       nodePort: 30017
   selector:
-    name: mongors
+    role: mongors
 ---
 # A headless service to create DNS records
 apiVersion: v1
@@ -24,7 +25,7 @@ metadata:
   namespace: ns-mongo
   name: mongodb-hs
   labels:
-    role: mongo
+    name: mongo
 spec:
   # the list of ports that are exposed by this service
   ports:
@@ -33,7 +34,7 @@ spec:
       targetPort: 27017
   clusterIP: None
   selector:
-    name: mongors
+    role: mongors
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -46,7 +47,7 @@ spec:
   template:
     metadata:
       labels:
-        role: mongo
+        role: mongors
         environment: test
         replicaset: MainRepSet
     spec:
@@ -70,7 +71,11 @@ spec:
             defaultMode: 256
       containers:
         - name: mongod-container
-          image: mongo
+          # Notice
+          # Tested on mongo:3.4, 3.6, 3.7
+          # as to mongo:3.2, an error happens like below:
+          # Error parsing option "wiredTigerCacheSizeGB" as int: Bad digit "." while parsing 0.25
+          image: mongo:3.4
           command:
             - "numactl"
             - "--interleave=all"
