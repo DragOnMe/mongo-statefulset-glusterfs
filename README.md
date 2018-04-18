@@ -44,15 +44,16 @@ Kubernetes 1.7~1.9x Cluster with glusterfs storage(HCI-like or external via HEKE
 * 3 개의 mongod-ss-0,1,2 Pod가 Running 상태에 있더라도 Replication 초기화를 위한 대기상태에 도달하지 않았을 수 있다. 3개의 Pod 모두에서 log를 확인하여 다음과 같은 log 내용이 반복적으로 보일때까지 대기
 
 ```
-...
-2018-04-18T05:45:59.950+0000 I REPL     [initandlisten] Did not find local Rollback ID document at startup. Creating one.
-2018-04-18T05:45:59.951+0000 I STORAGE  [initandlisten] createCollection: local.system.rollback.id with generated UUID: c5747cfc-2b8a-43e8-a4ad-45c7a00d5cb6
-2018-04-18T05:46:01.292+0000 I REPL     [initandlisten] Initialized the rollback ID to 1
-2018-04-18T05:46:01.292+0000 I REPL     [initandlisten] Did not find local replica set configuration document at startup;  NoMatchingDocument: Did not find replica set configuration document in local.system.replset
-2018-04-18T05:46:01.293+0000 I NETWORK  [initandlisten] waiting for connections on port 27017
-...
-2018-04-18T05:51:01.292+0000 I CONTROL  [thread1] Sessions collection is not set up; waiting until next sessions refresh interval: Replication has not yet been configured
-2018-04-18T05:56:01.292+0000 I CONTROL  [thread2] Sessions collection is not set up; waiting until next sessions refresh interval: Replication has not yet been configured
+    $ kubectl logs -f -n ns-mongo mongod-ss-0
+    ...
+    2018-04-18T05:45:59.950+0000 I REPL     [initandlisten] Did not find local Rollback ID document at startup. Creating one.
+    2018-04-18T05:45:59.951+0000 I STORAGE  [initandlisten] createCollection: local.system.rollback.id with generated UUID: c5747cfc-2b8a-43e8-a4ad-45c7a00d5cb6
+    2018-04-18T05:46:01.292+0000 I REPL     [initandlisten] Initialized the rollback ID to 1
+    2018-04-18T05:46:01.292+0000 I REPL     [initandlisten] Did not find local replica set configuration document at startup;  NoMatchingDocument: Did not find replica set configuration document in local.system.replset
+    2018-04-18T05:46:01.293+0000 I NETWORK  [initandlisten] waiting for connections on port 27017
+    ...
+    2018-04-18T05:51:01.292+0000 I CONTROL  [thread1] Sessions collection is not set up; waiting until next sessions refresh interval: Replication has not yet been configured
+    2018-04-18T05:56:01.292+0000 I CONTROL  [thread2] Sessions collection is not set up; waiting until next sessions refresh interval: Replication has not yet been configured
 ...
 ```
 
