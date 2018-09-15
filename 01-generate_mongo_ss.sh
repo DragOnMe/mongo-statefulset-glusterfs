@@ -1,11 +1,16 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Variables
-MONGOD_STATEFULSET="mongod-ss"
-MONGOD_NAMESPACE="ns-mongo"
+if [ -z "${MONGOD_STATEFULSET}" ]; then
+    export MONGOD_STATEFULSET="mongod-ss"
+fi
+
+if [ -z "${MONGOD_NAMESPACE}" ]; then
+    export MONGOD_NAMESPACE="ns-mongo"
+fi
 
 # Namespace
-kubectl apply -f mongodb-namespace.yaml
+kubectl create namespace "$MONGOD_NAMESPACE"
 
 # Create keyfile for the MongoD cluster as a Kubernetes shared secret
 TMPFILE=$(mktemp)
@@ -37,3 +42,4 @@ kubectl get pv
 echo
 kubectl get svc,sts,pvc -n ${MONGOD_NAMESPACE}
 
+kubectl rollout status -n ${MONGOD_NAMESPACE} deployment mongo-client
